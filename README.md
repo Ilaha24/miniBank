@@ -1,39 +1,41 @@
-# Getting Started
+# Account Task — Business Logic Explanation
 
+Bu layihə sadə bir bank sisteminin nümunəsidir. Məntiq olaraq üç əsas domen üzərində qurulub:
 
-# Bank Account Management System
+- **User** — istifadəçilərin saxlanması və idarə olunması (CRUD əməliyyatları).
+- **Account** — hər istifadəçiyə aid balans hesabları. Burada `deposit`, `withdraw`, `transfer` əməliyyatları aparılır.
+- **TransactionLog** — bütün maliyyə əməliyyatlarının tarixçəsi. Hansı hesabdan, hansı hesaba, hansı məbləğdə əməliyyat aparılıb və əməliyyatdan sonra balanslar necə dəyişib — hamısı burada saxlanılır.
 
-## Layihə haqqında
-Bu layihə sadə bank sistemini simulyasiya edir. İstifadəçilər (User), onların hesabları (Account) və bütün maliyyə əməliyyatlarının tarixçəsi (TransactionLog) idarə olunur.
-Müəllimin tələbinə uyğun olaraq **entity-lər arasında relation saxlanılmır**, yalnız ID-lər istifadə olunur.
+## Əsas Məntiq
 
-## Texnologiyalar
-- Java 17
-- Spring Boot (Web, Data JPA)
-- Lombok
-- H2 Database (və ya istənilən RDBMS)
+- **User**
+  - Sadə CRUD əməliyyatları.
+  - **Soft delete** tətbiq olunur: silinən istifadəçilərin statusu `DELETED` olur, amma DB-dən tam silinmir.
 
-## Entity-lər
-- **UserEntity** – istifadəçi məlumatlarını saxlayır (ad, yaş, email, status, createdAt, updatedAt).
-- **AccountEntity** – balans və sahibini saxlayır. Hesab həmişə balans=0 ilə açılır. Balans yalnız əməliyyatlarla dəyişir.
-- **TransactionLogEntity** – bütün deposit/withdraw/transfer əməliyyatlarının tarixçəsini saxlayır.
+- **Account**
+  - Hesab yaradıldıqda balans **0** olur və status `ACTIVE` təyin edilir.
+  - **Deposit** → hesabın balansı artır, eyni anda TransactionLog-a qeyd düşür.
+  - **Withdraw** → balans kifayət qədərdirsə, məbləğ çıxılır və log yazılır.
+  - **Transfer** → bir hesabdan digərinə məbləğ köçürülür, hər iki balans yenilənir və əməliyyat loglanır.
+  - **UpdateOwner** → hesab başqa user-ə verilə bilər.
+  - **Delete** → soft delete (status=DELETED).
 
-## DTO-lar
-- **UserCreateRequest / UserResponse / UpdateUserRequest**
-- **AccountCreateRequest / AccountResponse**
-- **DepositWithdrawRequest** – müəyyən hesaba pul yatırmaq və ya çıxarmaq üçün.
-- **TransferRequest** – iki hesab arasında pul köçürmək üçün.
-- **TransactionLogResponse** – əməliyyatların tarixçəsini göstərmək üçün.
+- **TransactionLog**
+  - Əl ilə yazılmır, yalnız Account əməliyyatları zamanı avtomatik yaranır.
+  - Əməliyyatdan sonra həm “from”, həm də “to” balansları qeyd olunur.
+  - Bu sayədə hər bir əməliyyatın izini sonradan görmək mümkündür.
 
-## Əməliyyat Məntiqi
-- **User**: CRUD əməliyyatları.
-- **Account**: Create (yalnız userId ilə, balans=0). Sonrakı əməliyyatlar:
-    - Deposit
-    - Withdraw
-    - Transfer
-- **TransactionLog**: bütün əməliyyatlar avtomatik loglanır. Request yoxdur, yalnız cavab DTO-su var.
+## Niyə belə dizayn?
+- **Relations istifadə olunmur**: müəllimin tələbi ilə `@ManyToOne` və s. əvəzinə sadə `Long userId`, `Long fromAccountId` saxlanılır.
+- **Soft delete**: həm User, həm də Account tam silinmir, status dəyişir. Beləliklə tarixçə itmədən qalır.
+- **TransactionLog**: bütün maliyyə əməliyyatları mütləq loglanır → audit və izləmə təmin olunur.
+- **Validation**: sadə format yoxlamaları (məs.: email, yaş, məbləğ > 0) DTO səviyyəsində, biznes qaydaları isə service səviyyəsindədir (məs.: kifayət qədər balans yoxlanışı).
 
-## Qərarların əsaslandırılması
-- **Relation yoxdur** – müəllimin tapşırığına uyğun olaraq yalnız ID saxlanılır.
-- **Validation DTO-larda saxlanılır** – Entity yalnız saxlama üçün istifadə olunur.
-- **Balans 0-dan başlayır** – İlk və sonrakı bütün pul yatırımları eyni qaydada edilir (konsistentlik üçün).
+---
+
+## Qısa Nəticə
+Layihənin məqsədi sadə bank əməliyyatlarını (deposit, withdraw, transfer) icra etmək və bütün addımları tarixçə ilə izləməkdir.  
+Ən vacib məqamlar:
+- Soft delete ilə məlumat itməsinin qarşısını almaq,
+- TransactionLog ilə şəffaf audit təmin etmək,
+- Relations olmadan sadə ID-lərlə işləmək.
