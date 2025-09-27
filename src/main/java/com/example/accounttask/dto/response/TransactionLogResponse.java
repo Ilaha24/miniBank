@@ -33,8 +33,7 @@ public class TransactionLogResponse {
     Long fromAccountId;
     Long toAccountId;
 
-    BigDecimal fromBalance;
-    BigDecimal toBalance;
+    BigDecimal balanceAfter;
 
     String description;
 

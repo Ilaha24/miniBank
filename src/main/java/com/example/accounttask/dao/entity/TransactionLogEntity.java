@@ -46,9 +46,7 @@ public class TransactionLogEntity {
 
     Long toAccountId;
 
-    BigDecimal balanceAfterFromAccount;
-
-    BigDecimal balanceAfterToAccount;
+    BigDecimal balanceAfter;
 
     String description;
 

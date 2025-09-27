@@ -19,8 +19,7 @@ public enum TransactionLogMapper {
                 .amount(entity.getAmount())
                 .fromAccountId(entity.getFromAccountId())
                 .toAccountId(entity.getToAccountId())
-                .fromBalance(entity.getBalanceAfterFromAccount())
-                .toBalance(entity.getBalanceAfterToAccount())
+                .balanceAfter(entity.getBalanceAfter())
                 .description(entity.getDescription())
                 .createdAt(entity.getCreatedAt())
                 .build();
